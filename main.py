@@ -1,20 +1,45 @@
 from fastapi import FastAPI, UploadFile, File
 from fastapi.responses import JSONResponse, HTMLResponse
+from fastapi.middleware.cors import CORSMiddleware
 from pathlib import Path
 import pandas as pd
 import shutil
 import os
 from with_faiss import SearchByImage
 
+# Initialize FastAPI app
 app = FastAPI(title="Image Search API")
 
+# Add CORS middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Allows all origins
+    allow_credentials=True,
+    allow_methods=["*"],  # Allows all methods
+    allow_headers=["*"],  # Allows all headers
+)
+
+# Make sure required directories exist
+os.makedirs("temp", exist_ok=True)
+
 # Load the data
-df = pd.read_csv("data/the_data.csv")
+try:
+    df = pd.read_csv("data/the_data.csv")
+except FileNotFoundError:
+    print("Warning: data/the_data.csv not found. Some functionality may be limited.")
+    # Create an empty DataFrame with expected columns as fallback
+    df = pd.DataFrame(columns=["image_name", "img_link"])
 
 def get_image_info(img_name):
-    image_info = df[df['image_name'] == img_name].iloc[0]
-    image_info = image_info.drop("img_link")
-    return image_info
+    """Get information about an image from the DataFrame"""
+    try:
+        image_info = df[df['image_name'] == img_name].iloc[0]
+        if 'img_link' in image_info:
+            image_info = image_info.drop("img_link")
+        return image_info
+    except (IndexError, KeyError):
+        # Return empty dict if image not found
+        return {}
 
 @app.get("/search", response_class=HTMLResponse)
 async def search_page():
@@ -70,10 +95,16 @@ async def search_image(file: UploadFile = File(...)):
             info = get_image_info(img_name)
             results.append({
                 "img_name": img_name,
-                "img_info": info.to_dict()
+                "img_info": info.to_dict() if not isinstance(info, dict) else info
             })
         
         return JSONResponse(content={"results": results})
+    
+    except Exception as e:
+        return JSONResponse(
+            status_code=500,
+            content={"error": f"An error occurred: {str(e)}"}
+        )
     
     finally:
         # Clean up the temporary file
@@ -82,8 +113,16 @@ async def search_image(file: UploadFile = File(...)):
 
 @app.get("/")
 async def root():
-    return {"message": "Welcome to the Image Search API. Use POST /search endpoint with an image file to search for similar images."}
+    return {"message": "Welcome to the Image Search API. Use POST /search endpoint with an image file to search for similar images.",
+            "docs_url": "/docs"}
+
+@app.get("/health")
+async def health_check():
+    """Health check endpoint for Heroku"""
+    return {"status": "healthy"}
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000) 
+    # Use the PORT environment variable provided by Heroku
+    port = int(os.environ.get("PORT", 8000))
+    uvicorn.run(app, host="0.0.0.0", port=port)
