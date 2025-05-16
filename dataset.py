@@ -41,7 +41,3 @@ class ImageDataset(Dataset):
             
         return img, img_path
         
-# if __name__ == "__main__":
-#     data_path = "./data/the_images"
-#     obj = ImageDataset(data_path=data_path)
-#     print(obj[0])

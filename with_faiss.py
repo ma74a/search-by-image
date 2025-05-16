@@ -151,13 +151,3 @@ class SearchByImage:
         self.load_index_features(index_path=index_path, features_path=features_path)
         self.load_image_paths(paths_file=img_paths)
         
-
-if __name__ == "__main__":
-    obj = SearchByImage()
-    # obj.build_faiss_index()
-    # obj.save_index_features(index_path=Config.INDEX_PATH, features_path=Config.FEATURES_PATH)
-    # obj.save_image_paths(img_paths=Config.IMAGES_PATHS)
-    
-    similars = obj.search("data/the_images/٢ سرير.jpg")
-    for img in similars:
-        print(similars)
