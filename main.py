@@ -86,7 +86,7 @@ async def search_image(file: UploadFile = File(...)):
         obj.load_save_model()
         
         # Perform the search
-        similar = obj.search(query_path=temp_path)
+        similar = obj.search(query_path=temp_path, top_k=40)
         
         # Process results
         results = []

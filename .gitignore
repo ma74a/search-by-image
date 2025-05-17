@@ -3,6 +3,7 @@ digram.png
 test.py
 simplified_main.py
 API_DOCUMENTATION.md
+Dockerfile
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
