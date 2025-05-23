@@ -1,11 +1,19 @@
+import os
+
+# Set cache directory for torchvision models to a writable folder inside your app
+os.environ["TORCH_HOME"] = "/tmp/.cache"
+os.makedirs("/tmp/.cache", exist_ok=True)
+
+
+import shutil
+import traceback
+from pathlib import Path
+import tempfile
+import pandas as pd
+
 from fastapi import FastAPI, UploadFile, File
 from fastapi.responses import JSONResponse, HTMLResponse
 from fastapi.middleware.cors import CORSMiddleware
-from pathlib import Path
-import pandas as pd
-import shutil
-import os
-import traceback
 
 from with_faiss import SearchByImage
 from config import Config
@@ -20,7 +28,6 @@ app.add_middleware(
     allow_headers=["*"],  # Allows all headers
 )
 
-os.makedirs("temp", exist_ok=True)
 
 try:
     df = pd.read_csv("data/the_data.csv")
@@ -82,9 +89,11 @@ async def search_page():
 
 @app.post("/search")
 async def search_image(file: UploadFile = File(...)):
-    temp_dir = "temp"
-    os.makedirs(temp_dir, exist_ok=True)
-    temp_path = os.path.join(temp_dir, file.filename)
+    # Use system temp directory
+    temp_dir = tempfile.gettempdir()
+    safe_filename = Path(file.filename).name  # sanitize filename
+    temp_path = os.path.join(temp_dir, safe_filename)
+
     try:
         with open(temp_path, "wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
@@ -107,21 +116,25 @@ async def search_image(file: UploadFile = File(...)):
         return JSONResponse(status_code=500, content={"error": f"An error occurred: {str(e)}"})
 
     finally:
+        # Clean up temp file if it exists
         if os.path.exists(temp_path):
             os.remove(temp_path)
 
 @app.get("/")
 async def root():
-    return {"message": "Welcome to the Image Search API. Use POST /search endpoint with an image file to search for similar images.",
-            "docs_url": "/docs"}
+    return {
+        "message": "Welcome to the Image Search API. Use POST /search endpoint with an image file to search for similar images.",
+        "docs_url": "/docs"
+    }
 
 @app.get("/health")
 async def health_check():
     return {"status": "healthy"}
 
 
-if __name__ == "__main__":
-    import uvicorn
-    # Use the PORT environment variable provided by Heroku
-    port = int(os.environ.get("PORT", 8000))
-    uvicorn.run(app, host="0.0.0.0", port=port)
+
+# if __name__ == "__main__":
+#     import uvicorn
+#     # Use the PORT environment variable provided by Heroku
+#     port = int(os.environ.get("PORT", 8000))
+#     uvicorn.run(app, host="0.0.0.0", port=port)
