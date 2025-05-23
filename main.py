@@ -5,12 +5,13 @@ from pathlib import Path
 import pandas as pd
 import shutil
 import os
-from with_faiss import SearchByImage
+import traceback
 
-# Initialize FastAPI app
+from with_faiss import SearchByImage
+from config import Config
+
 app = FastAPI(title="Image Search API")
 
-# Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],  # Allows all origins
@@ -19,27 +20,37 @@ app.add_middleware(
     allow_headers=["*"],  # Allows all headers
 )
 
-# Make sure required directories exist
 os.makedirs("temp", exist_ok=True)
 
-# Load the data
 try:
     df = pd.read_csv("data/the_data.csv")
 except FileNotFoundError:
     print("Warning: data/the_data.csv not found. Some functionality may be limited.")
-    # Create an empty DataFrame with expected columns as fallback
     df = pd.DataFrame(columns=["image_name", "img_link"])
 
 def get_image_info(img_name):
-    """Get information about an image from the DataFrame"""
     try:
         image_info = df[df['image_name'] == img_name].iloc[0]
         if 'img_link' in image_info:
             image_info = image_info.drop("img_link")
         return image_info
     except (IndexError, KeyError):
-        # Return empty dict if image not found
         return {}
+
+# Initialize SearchByImage once at startup
+search_obj = SearchByImage()
+
+# Verify required files exist before loading
+for path in [Config.INDEX_PATH, Config.FEATURES_PATH, Config.IMAGES_PATHS]:
+    if not os.path.exists(path):
+        print(f"Warning: Required file {path} not found!")
+
+try:
+    search_obj.load_save_model()
+    print("Search model loaded successfully")
+except Exception as e:
+    print(f"Error loading search model: {e}")
+    traceback.print_exc()
 
 @app.get("/search", response_class=HTMLResponse)
 async def search_page():
@@ -71,24 +82,15 @@ async def search_page():
 
 @app.post("/search")
 async def search_image(file: UploadFile = File(...)):
-    # Create a temporary directory if it doesn't exist
     temp_dir = "temp"
     os.makedirs(temp_dir, exist_ok=True)
-    
-    # Save the uploaded file temporarily
     temp_path = os.path.join(temp_dir, file.filename)
-    with open(temp_path, "wb") as buffer:
-        shutil.copyfileobj(file.file, buffer)
-    
     try:
-        # Initialize the search object
-        obj = SearchByImage()
-        obj.load_save_model()
-        
-        # Perform the search
-        similar = obj.search(query_path=temp_path, top_k=40)
-        
-        # Process results
+        with open(temp_path, "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
+
+        similar = search_obj.search(query_path=temp_path, top_k=40)
+
         results = []
         for img in similar:
             img_name = Path(img).name
@@ -97,17 +99,14 @@ async def search_image(file: UploadFile = File(...)):
                 "img_name": img_name,
                 "img_info": info.to_dict() if not isinstance(info, dict) else info
             })
-        
+
         return JSONResponse(content={"results": results})
-    
+
     except Exception as e:
-        return JSONResponse(
-            status_code=500,
-            content={"error": f"An error occurred: {str(e)}"}
-        )
-    
+        traceback.print_exc()
+        return JSONResponse(status_code=500, content={"error": f"An error occurred: {str(e)}"})
+
     finally:
-        # Clean up the temporary file
         if os.path.exists(temp_path):
             os.remove(temp_path)
 
@@ -118,8 +117,8 @@ async def root():
 
 @app.get("/health")
 async def health_check():
-    """Health check endpoint for Heroku"""
     return {"status": "healthy"}
+
 
 if __name__ == "__main__":
     import uvicorn
