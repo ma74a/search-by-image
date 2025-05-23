@@ -2,6 +2,10 @@
 
 A content-based image retrieval system that finds similar images to a query image using deep learning features and FAISS vector similarity search.
 
+## 🌐 Live Demo
+
+Try the application live at: **[https://mahm0uda21-search-by-image.hf.space](https://mahm0uda21-search-by-image.hf.space)**
+
 ## Features
 
 - **Fast Image Search**: Find visually similar images in milliseconds using FAISS similarity search
@@ -9,6 +13,7 @@ A content-based image retrieval system that finds similar images to a query imag
 - **Easy-to-use API**: Simple REST API with FastAPI for image upload and search
 - **Web Interface**: Basic web interface for uploading and searching images
 - **Dockerized**: Easy deployment with Docker
+- **Cloud Deployment**: Deployed on Hugging Face Spaces for easy access
 
 ## How It Works
 
@@ -52,7 +57,7 @@ A content-based image retrieval system that finds similar images to a query imag
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/yourusername/search-by-image.git
+   git clone https://github.com/mahm0uda21/search-by-image.git
    cd search-by-image
    ```
 
@@ -107,16 +112,18 @@ uvicorn main:app --host 0.0.0.0 --port 8000
 
 ### API Endpoints
 
-- GET `/`: Welcome message and API info
-- GET `/search`: Web interface for image upload and search
-- POST `/search`: Endpoint for image upload and search
-- GET `/health`: Health check endpoint
+- **GET** `/`: Welcome message and API info
+- **GET** `/search`: Web interface for image upload and search
+- **POST** `/search`: Endpoint for image upload and search
+- **GET** `/health`: Health check endpoint
 
 ### Example Usage
 
-1. Open your browser and go to `http://localhost:8000/search`
+#### Web Interface
+1. Visit the [live demo](https://mahm0uda21-search-by-image.hf.space) or open your browser and go to `http://localhost:8000/search`
 2. Upload an image using the web interface
 3. View similar images returned by the system
+
 
 ## Project Structure
 
@@ -128,6 +135,8 @@ search-by-image/
 ├── with_faiss.py       # FAISS indexing and search implementation
 ├── requirements.txt    # Python dependencies
 ├── Dockerfile          # Docker configuration
+├── LICENSE             # MIT License
+├── README.md           # Project documentation
 ├── data/
 │   ├── the_images/     # Directory for storing images
 │   └── the_data.csv    # Optional metadata for images
@@ -142,10 +151,30 @@ search-by-image/
 - **Feature Extractor**: ResNet50 pre-trained on ImageNet
 - **Feature Dimension**: 2048
 - **Similarity Metric**: Inner product (cosine similarity on normalized vectors)
+- **Search Algorithm**: FAISS IndexFlatIP for exact similarity search
+
+## Deployment
+
+The application is deployed on Hugging Face Spaces, making it accessible to anyone without local setup. The deployment includes:
+- Automatic dependency management
+- Persistent storage for the FAISS index
+- Scalable infrastructure
+
 
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## Author
+
+**Mahmoud Etman** - [GitHub Profile](https://github.com/mahm0uda21)
+
+## Acknowledgments
+
+- ResNet50 model from torchvision
+- FAISS library by Facebook AI Research
+- FastAPI framework for the web API
+- Hugging Face Spaces for hosting
 
 ## Future Improvements
 
@@ -154,3 +183,5 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - Add support for image preprocessing options
 - Implement support for multiple image collections
 - Add more advanced metadata filtering
+- Support for batch image uploads
+- Integration with cloud storage services
