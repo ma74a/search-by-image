@@ -1,4 +1,9 @@
 
+saved/*
+!saved/.gitkeep
+output_videos/*
+!output_videos/.gitkeep
+
 digram.png
 test.py
 simplified_main.py
