@@ -1,8 +1,12 @@
 import torch
 import torch.nn.functional as F
 
-
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from config import Config
+from PIL import Image
+
 
 class DINOv2FeatureExtractor:
     def __init__(self):
@@ -12,14 +16,12 @@ class DINOv2FeatureExtractor:
         )
         self.model.eval()
 
-        self.tranforms = Config.TRANSFORM
-        self.features = []
-        self.images_path = []
 
     def extract_features(self, image):
 
         with torch.no_grad():
-            features = self.model(image) # torch.Size([1, 768])
+            outputs = self.model.forward_features(image)
+            features = outputs['x_norm_clstoken']  # (1, 768) — global representation
 
         features = F.normalize(
             features,
