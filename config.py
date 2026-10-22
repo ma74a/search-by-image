@@ -12,6 +12,10 @@ class Config:
     INDEX_PATH_DINO = "saved/faiss_index_dinov2.faiss"
     FEATURES_PATH_DINO = "saved/features_dinov2.npy"
     IMAGES_PATHS_DINO = "saved/images_paths_dinov2.txt"
+
+    index_path="saved/fusion.faiss",
+    embeddings_path="saved/fusion_embeddings.npy",
+    paths_path="saved/fusion_paths.txt"
     
     # Parameters
     BATCH_SIZE = 32
