@@ -15,7 +15,8 @@ from fastapi import FastAPI, UploadFile, File
 from fastapi.responses import JSONResponse, HTMLResponse
 from fastapi.middleware.cors import CORSMiddleware
 
-from with_faiss import SearchByImage
+# from with_faiss import SearchByImageResNet
+from search_combined import SearchByImageFusion
 from config import Config
 
 app = FastAPI(title="Image Search API")
@@ -45,15 +46,15 @@ def get_image_info(img_name):
         return {}
 
 # Initialize SearchByImage once at startup
-search_obj = SearchByImage()
+search_obj = SearchByImageFusion()
 
 # Verify required files exist before loading
-for path in [Config.INDEX_PATH, Config.FEATURES_PATH, Config.IMAGES_PATHS]:
+for path in [Config.index_path, Config.embeddings_path, Config.paths_path]:
     if not os.path.exists(path):
         print(f"Warning: Required file {path} not found!")
 
 try:
-    search_obj.load_save_model()
+    search_obj.load_database()
     print("Search model loaded successfully")
 except Exception as e:
     print(f"Error loading search model: {e}")
